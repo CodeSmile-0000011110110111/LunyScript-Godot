@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://esdc77w7ncq8"]
-
-[ext_resource type="Script" uid="uid://ss4vx144dk5g" path="res://addons/lunyscript/Luny.Godot/GodotLifecycleAdapter.cs" id="1_g0jcn"]
-
-[node name="GodotLifecycleAdapter" type="Node"]
-script = ExtResource("1_g0jcn")
