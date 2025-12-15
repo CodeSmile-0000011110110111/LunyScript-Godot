@@ -2,13 +2,17 @@ extends Node
 
 # Ensures GodotLifecycleAdapter gets instantiated when launching player
 
-const GODOT_LIFECYCLE_ADAPTER = preload("uid://esdc77w7ncq8")
+const GODOT_LIFECYCLE_ADAPTER_CS := preload("uid://ss4vx144dk5g")
 
 func _enter_tree() -> void:
-    # Instantiate the adapter via a PackedScene bound to the C# script and add to the scene.
-    if GODOT_LIFECYCLE_ADAPTER:
-        var adapter: Node = GODOT_LIFECYCLE_ADAPTER.instantiate()
-        get_parent().add_child.call_deferred(adapter)
-        queue_free() # bootstrap no longer needed
+    if Engine.is_editor_hint():
+        return  # runtime only
+
+    # Instantiate the C# adapter directly and add to the scene root
+    #var adapter := GodotLifecycleAdapter.new()
+    var adapter := GODOT_LIFECYCLE_ADAPTER_CS.new() # creates instance of the C# class
+    if adapter:
+        get_tree().root.add_child.call_deferred(adapter)
+        queue_free() # bootstrap no longer needed after spawning adapter
     else:
-        push_error("Failed to load GodotLifecycleAdapter.tscn")
+        push_error("Failed to instantiate Luny.Godot.GodotLifecycleAdapter")

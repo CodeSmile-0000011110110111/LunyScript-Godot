@@ -6,13 +6,13 @@ namespace Luny.Godot
     /// <summary>
     /// Ultra-thin Godot adapter: auto-initializes and forwards lifecycle to EngineLifecycleDispatcher.
     /// </summary>
-    public sealed partial class GodotLifecycleAdapter : Node
+    internal sealed partial class GodotLifecycleAdapter : Node
     {
         private static GodotLifecycleAdapter _instance;
 
         private IEngineLifecycleDispatcher _dispatcher;
 
-        public GodotLifecycleAdapter()
+        private GodotLifecycleAdapter()
         {
             GD.Print($"GodotLifecycleAdapter ({GetInstanceId()}) ctor");
             if (_instance != null)
@@ -49,7 +49,7 @@ namespace Luny.Godot
         public override void _Notification(Int32 what)
         {
             if (what != NotificationProcess && what != NotificationPhysicsProcess)
-            GD.Print($"GodotLifecycleAdapter ({GetInstanceId()}) what={what}");
+                GD.Print($"GodotLifecycleAdapter ({GetInstanceId()}) what={what}");
 
             switch ((Int64)what)
             {
