@@ -4,7 +4,7 @@ extends EditorPlugin
 # Ensures Luny Bootstrap is set as autoload singleton
 
 const LUNY_AUTOLOAD_NAME := "LunyBootstrap"
-const LUNY_BOOTSTRAP_UID := "uid://bumivynfk8i2q"
+const LUNY_BOOTSTRAP_UID := "uid://ss4vx144dk5g" # GodotLifecycleAdapter.cs
 
 func _ensure_luny_autoload() -> void:
     var res_path := ResourceUID.uid_to_path(LUNY_BOOTSTRAP_UID)
