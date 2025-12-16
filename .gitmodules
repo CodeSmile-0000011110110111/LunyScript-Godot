@@ -1,3 +1,9 @@
 [submodule "LunyScript"]
 	path = LunyScript
 	url = https://github.com/CodeSmile-0000011110110111/LunyScript-CSharp
+[submodule "Luny"]
+	path = Luny
+	url = https://github.com/CodeSmile-0000011110110111/Luny-CSharp
+[submodule "Luny.Godot"]
+	path = Luny.Godot
+	url = https://github.com/CodeSmile-0000011110110111/Luny-CSharp-Godot
