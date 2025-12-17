@@ -7,3 +7,6 @@
 [submodule "Luny.Godot"]
 	path = Luny.Godot
 	url = https://github.com/CodeSmile-0000011110110111/Luny-CSharp-Godot
+[submodule "LunyScript.Godot"]
+	path = LunyScript.Godot
+	url = https://github.com/CodeSmile-0000011110110111/LunyScript-CSharp-Godot
