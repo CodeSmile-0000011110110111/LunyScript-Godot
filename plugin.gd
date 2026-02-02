@@ -3,83 +3,149 @@ extends EditorPlugin
 
 # Ensures Luny Bootstrap is set as autoload singleton
 
-const LUNY_AUTOLOAD_NAME := "LunyEngineGodotAdapter"
-const LUNY_BOOTSTRAP_UID := "uid://ss4vx144dk5g" # LunyEngineGodotAdapter.cs
+const LunyAutoloadName := "LunyEngineGodotAdapter"
+const LunyBootstrapUid := "uid://ss4vx144dk5g" # LunyEngineGodotAdapter.cs
+const AnalyzerPath = "addons/lunyscript/LunyScript/Analyzers/LunyScript-Analyzers.dll"
 
-func _enable_plugin() -> void:
-    _ensure_luny_autoload()
-    _ensure_analyzer_in_csproj()
+func OnEnablePlugin() -> void:
+    EnsureLunyAutoload()
+    EnsureAnalyzerInCsproj()
 
-func _enter_tree() -> void:
-    _ensure_luny_autoload()
-    _ensure_analyzer_in_csproj()
+func OnDisablePlugin() -> void:
+    RemoveLunyAutoload()
 
-func _build() -> bool:
-    _ensure_analyzer_in_csproj()
-    return true
+func OnEnterTree() -> void:
+    EnsureLunyAutoload()
+    EnsureAnalyzerInCsproj()
 
-func _notification(what):
-    if what == NOTIFICATION_APPLICATION_FOCUS_IN:
-        _ensure_analyzer_in_csproj()
+func OnBuild() -> void:
+    EnsureAnalyzerInCsproj()
 
+func OnEditorReceiveFocus() -> void:
+    EnsureAnalyzerInCsproj()
 
-func _remove_luny_autoload() -> void:
-    remove_autoload_singleton(LUNY_AUTOLOAD_NAME)
-    ProjectSettings.save()
+func RemoveLunyAutoload() -> void:
+    RemoveAutoloadSingleton(LunyAutoloadName)
+    SaveProjectSettings()
 
-func _disable_plugin() -> void:
-    _remove_luny_autoload()
+func EnsureLunyAutoload() -> void:
+    var resPath := UidToPath(LunyBootstrapUid)
+    AddAutoloadSingleton(LunyAutoloadName, resPath)
+    SaveProjectSettings()
 
-
-func _ensure_luny_autoload() -> void:
-    var res_path := ResourceUID.uid_to_path(LUNY_BOOTSTRAP_UID)
-    add_autoload_singleton(LUNY_AUTOLOAD_NAME, res_path)
-    ProjectSettings.save()
-
-
-func _ensure_analyzer_in_csproj() -> void:
-    var path = _get_csproj_path()
+func EnsureAnalyzerInCsproj() -> void:
+    var path = GetCsprojPath()
     if path == "":
         return
         
-    var file = FileAccess.open(path, FileAccess.READ)
+    var file = FileOpenRead(path)
     if not file:
         return
         
-    var content = file.get_as_text()
-    file.close()
+    var content = FileReadAllText(file)
+    FileClose(file)
     
-    var analyzer_path = "addons/lunyscript/LunyScript/Analyzers/LunyScript-Analyzers.dll"
     # Normalize slashes for comparison to avoid duplicates if different slashes are used
-    var check_path = analyzer_path.replace("\\", "/")
-    var normalized_content = content.replace("\\", "/")
+    var checkPath = StringReplace(AnalyzerPath, "\\", "/")
+    var normalizedContent = StringReplace(content, "\\", "/")
     
-    if normalized_content.contains("<Analyzer Include=\"" + check_path + "\""):
+    if StringContains(normalizedContent, "<Analyzer Include=\"" + checkPath + "\""):
         return
         
     # Insert before </Project>
-    var insert_pos = content.find("</Project>")
-    if insert_pos == -1:
+    var insertPos = StringFind(content, "</Project>")
+    if insertPos == -1:
         return
         
-    var block = "\n  <ItemGroup>\n    <Analyzer Include=\"" + analyzer_path + "\" />\n  </ItemGroup>\n"
-    var new_content = content.insert(insert_pos, block)
+    var block = "\n  <ItemGroup>\n    <Analyzer Include=\"" + AnalyzerPath + "\" />\n  </ItemGroup>\n"
+    var newContent = StringInsert(content, insertPos, block)
     
-    file = FileAccess.open(path, FileAccess.WRITE)
+    file = FileOpenWrite(path)
     if file:
-        file.store_string(new_content)
-        file.close()
+        FileWriteAllText(file, newContent)
+        FileClose(file)
 
+func GetCsprojPath() -> String:
+    var assemblyName = GetProjectSetting("dotnet/project/assembly_name", "")
+    if assemblyName == "":
+        assemblyName = GetProjectSetting("application/config/name", "")
 
-func _get_csproj_path() -> String:
-    var assembly_name = ProjectSettings.get_setting("dotnet/project/assembly_name", "")
-    if assembly_name == "":
-        assembly_name = ProjectSettings.get_setting("application/config/name", "")
-
-    var path = "res://" + assembly_name + ".csproj"
-    if FileAccess.file_exists(path):
+    var path = "res://" + assemblyName + ".csproj"
+    if FileExists(path):
         return path
 
     # TODO: Fallback for multiple .csproj
 
     return ""
+
+
+## GDScript native wrappers ...
+
+# SIGNALS
+func _enable_plugin() -> void:
+    OnEnablePlugin()
+
+func _disable_plugin() -> void:
+    OnDisablePlugin()
+
+func _enter_tree() -> void:
+    OnEnterTree()
+
+func _build() -> bool:
+    OnBuild()
+    return true
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_APPLICATION_FOCUS_IN:
+        OnEditorReceiveFocus()
+
+# File
+func FileExists(path: String) -> bool:
+    return FileAccess.file_exists(path)
+
+func FileOpen(path: String, flags: FileAccess.ModeFlags) -> FileAccess:
+    return FileAccess.open(path, flags)
+
+func FileOpenRead(path: String) -> FileAccess:
+    return FileOpen(path, FileAccess.READ)
+
+func FileOpenWrite(path: String) -> FileAccess:
+    return FileOpen(path, FileAccess.WRITE)
+
+func FileClose(file: FileAccess) -> void:
+    file.close()
+
+func FileReadAllText(file: FileAccess) -> String:
+    return file.get_as_text()
+
+func FileWriteAllText(file: FileAccess, text: String) -> void:
+    file.store_string(text)
+
+# String
+func StringReplace(text: String, what: String, forWhat: String) -> String:
+    return text.replace(what, forWhat)
+
+func StringContains(text: String, what: String) -> bool:
+    return text.contains(what)
+
+func StringFind(text: String, what: String) -> int:
+    return text.find(what)
+
+func StringInsert(text: String, pos: int, what: String) -> String:
+    return text.insert(pos, what)
+
+# Editor
+func GetProjectSetting(name: String, defaultValue: Variant) -> Variant:
+    return ProjectSettings.get_setting(name, defaultValue)
+
+func SaveProjectSettings() -> void:
+    ProjectSettings.save()
+
+func UidToPath(uid: String) -> String:
+    return ResourceUID.uid_to_path(uid)
+
+func AddAutoloadSingleton(name: String, path: String) -> void:
+    add_autoload_singleton(name, path)
+
+func RemoveAutoloadSingleton(name: String) -> void:
+    remove_autoload_singleton(name)
