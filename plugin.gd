@@ -8,17 +8,20 @@ const Res = Gds.Res
 const Project = GdsEditor.Project
 
 const LunyEngineAutoloadName := "LunyEngineGodotAdapter"
-const LunyGodotAdapterUid := "uid://ss4vx144dk5g" # UID of LunyEngineGodotAdapter.cs
-const AnalyzerPath = "addons/lunyscript/LunyScript/Analyzers/LunyScript-Analyzers.dll"
+const LunyGodotAdapterUid := "uid://ss4vx144dk5g" # ../lunyscript/Luny.Godot/Engine/LunyEngineGodotAdapter.cs
+const LunyScriptAnalyzerPath = "addons/lunyscript/LunyScript/Analyzers/LunyScript-Analyzers.dll" # for .csproj
+
 
 func AddLunyEngineAutoload() -> void:
     var resPath := Res.UidToPath(LunyGodotAdapterUid)
     Project.AddAutoloadSingleton(self, LunyEngineAutoloadName, resPath)
     Project.Save()
 
+
 func RemoveLunyEngineAutoload() -> void:
     Project.RemoveAutoloadSingleton(self, LunyEngineAutoloadName)
     Project.Save()
+
 
 func EnsureAnalyzerReferencedInCsproj() -> void:
     var path = GetCsprojPath()
@@ -33,10 +36,11 @@ func EnsureAnalyzerReferencedInCsproj() -> void:
     File.Close(file)
     
     # Normalize slashes for comparison to avoid duplicates if different slashes are used
-    var checkPath = Str.Replace(AnalyzerPath, "\\", "/")
+    var checkPath = Str.Replace(LunyScriptAnalyzerPath, "\\", "/")
     var normalizedContent = Str.Replace(content, "\\", "/")
-    
-    if Str.Contains(normalizedContent, "<Analyzer Include=\"" + checkPath + "\""):
+
+    var analyzerInclude = "<Analyzer Include=\"" + checkPath + "\""
+    if Str.Contains(normalizedContent, analyzerInclude):
         return
         
     # Insert before </Project>
@@ -44,13 +48,14 @@ func EnsureAnalyzerReferencedInCsproj() -> void:
     if insertPos == -1:
         return
         
-    var block = "\n  <ItemGroup>\n    <Analyzer Include=\"" + AnalyzerPath + "\" />\n  </ItemGroup>\n"
+    var block = "\n  <ItemGroup>\n    " + analyzerInclude + " />\n  </ItemGroup>\n"
     var newContent = Str.Insert(content, insertPos, block)
     
     file = File.OpenWritable(path)
     if file:
         File.WriteAllText(file, newContent)
         File.Close(file)
+
 
 func GetCsprojPath() -> String:
     var assemblyName = Project.GetSetting("dotnet/project/assembly_name", "")
